@@ -498,10 +498,11 @@ const InventoryPage = () => {
                       <TableCell>{part.manufacturer}</TableCell>
                       <TableCell>{part.location}</TableCell>
                       <TableCell className="text-right">
-                      ₹{part.costPrice.toFixed(2)}
+                      ₹{((part.costPrice ?? 0) * 100).toFixed(2)}
+
                       </TableCell>
                       <TableCell className="text-right">
-                      ₹{part.price.toFixed(2)}
+                      ₹{(part.price ??0).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
                         {part.stockQuantity}

@@ -10,35 +10,49 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
 const generateCustomerId = async () => {
-  const lastCustomer = await Customer.findOne().sort({ createdAt: -1 }).limit(1);
-  if (!lastCustomer || !lastCustomer.id) return "C001";
+  const lastCustomer = await Customer.findOne().sort({ createdAt: -1 });
 
-  const lastIdNum = parseInt(lastCustomer.id.substring(1)) || 0;
-  const newIdNum = lastIdNum + 1;
-  return `C${String(newIdNum).padStart(3, '0')}`;
+  let lastId = 0;
+
+  if (lastCustomer && lastCustomer.id) {
+    const match = lastCustomer.id.match(/C(\d+)/);
+    if (match) {
+      lastId = parseInt(match[1]);
+    }
+  }
+
+  let newId;
+  let exists = true;
+
+  // Loop to ensure uniqueness
+  do {
+    lastId += 1;
+    newId = `C${String(lastId).padStart(3, "0")}`;
+    exists = await Customer.exists({ id: newId });
+  } while (exists);
+
+  return newId;
 };
 
-// POST new customer
+
 router.post('/', async (req, res) => {
   try {
-    console.log("recieved");  
-    const newId = await generateCustomerId();
-
-    const customer = new Customer({
-      id: newId,
+    const newCustomer = new Customer({
+      id: await generateCustomerId(),
       name: req.body.name,
       phone: req.body.phone,
-      address: req.body.address
+      address: req.body.address,
     });
 
-    const savedCustomer = await customer.save();
-    console.log(customer);
-    res.status(201).json(savedCustomer);
+    const saved = await newCustomer.save();
+    res.status(201).json(saved);
   } catch (err) {
+    console.error("Customer creation error:", err.message);
     res.status(400).json({ message: err.message });
   }
 });
+
+
 
 module.exports = router;

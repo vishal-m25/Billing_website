@@ -63,13 +63,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+
+
+
 // Customer form schema
 const customerSchema = z.object({
-  id: z.string().min(1, { message: "Customer ID is required" }),
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   phone: z.string().min(6, { message: "Phone number is required" }),
   address: z.string().min(5, { message: "Address is required" }),
 });
+
 
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -85,11 +88,11 @@ const BillingPage = () => {
   const customerForm = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
-      id: "",
       name: "",
       phone: "",
       address: "",
-    },
+    }
+    
     
   });
 
@@ -130,40 +133,66 @@ const BillingPage = () => {
   );
 
   // Create customer and part options for searchable select
-  const customerOptions = useMemo(() => 
-    customers.map(customer => ({
+  const customerOptions = useMemo(() => {
+    return (customers ?? []).map(customer => ({
       label: `${customer.name} (${customer.phone})`,
-      value: customer._id || ""
-    })),
-    [customers]
-  );
+      value: customer._id || "",
+    }));
+  }, [customers]);
+  
+  
+  
 
-  const partOptions = useMemo(() => 
-    parts.map(part => ({
-      label: `${part.name} - ${part.partNumber} ($${part.price.toFixed(2)})`,
+  const partOptions = useMemo(() =>
+    (parts ?? []).map(part => ({
+      label: `${part.name} - ${part.partNumber} (₹${part.price.toFixed(2)})`,
       value: part._id || ""
     })),
     [parts]
   );
 
+  const [customerSearch, setCustomerSearch] = useState('');
+const filteredCustomers = customers?.filter((c) =>
+  c.name.toLowerCase().includes(customerSearch.toLowerCase())
+) || [];
+
+  
+
   // Handle customer form submission
   const onCustomerSubmit = async (data: CustomerFormValues) => {
     try {
-      console.log("asdf");  
-      const newCustomer = await api.addCustomerWithToast(data as Omit<Customer, '_id' | 'id'>, "Customer added successfully");
-      setIsCustomerDialogOpen(false);
-      customerForm.reset();
+      // Add new customer via API (no id/_id sent)
+      const newCustomer = await api.addCustomerWithToast(
+        data as Omit<Customer, "_id">,
+        "Customer added successfully"
+      );
+
+  
+      // Refresh customer list
       await refetchCustomers();
-    
-      // Auto-select the new customer
-      if (newCustomer?._id) {
+  
+      // Auto-select the new customer using the returned _id
+      if (newCustomer && newCustomer._id) {
         setSelectedCustomer(newCustomer._id);
       }
-    
+  
+      // Close dialog and reset form
+      setIsCustomerDialogOpen(false);
+      customerForm.reset();
+  
     } catch (error) {
       console.error("Error adding customer:", error);
     }
   };
+  
+
+  const [partSearch, setPartSearch] = useState("");
+const filteredParts = useMemo(() => {
+  return (parts ?? []).filter((p) =>
+    `${p.name} ${p.partNumber}`.toLowerCase().includes(partSearch.toLowerCase())
+  );
+}, [partSearch, parts]);
+
 
   // Calculate totals
   const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
@@ -382,14 +411,36 @@ const BillingPage = () => {
                   </DialogContent>
                 </Dialog>
               </div>
-              <SearchableSelect
-  options={customerOptions ?? []}
-  value={selectedCustomer ?? ''}
-  onChange={setSelectedCustomer}
-  placeholder="Search or select customer"
-  searchPlaceholder="Search customers..."
-  emptyMessage="No customers found"
-/>
+              <div className="relative">
+  <Input
+    placeholder="Search or select customer"
+    value={customerSearch}
+    onChange={(e) => setCustomerSearch(e.target.value)}
+    className="w-full"
+  />
+  {customerSearch && filteredCustomers.length > 0 && (
+    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow max-h-60 overflow-y-auto">
+      {filteredCustomers.map((customer) => (
+        <div
+          key={customer._id}
+          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+          onClick={() => {
+            setSelectedCustomer(customer._id);
+            setCustomerSearch("");
+          }}
+        >
+          {customer.name} ({customer.phone})
+        </div>
+      ))}
+    </div>
+  )}
+  {customerSearch && filteredCustomers.length === 0 && (
+    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow px-4 py-2 text-sm text-muted-foreground">
+      No customers found
+    </div>
+  )}
+</div>
+
 
             </div>
             {selectedCustomer && (
@@ -468,14 +519,36 @@ const BillingPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2 md:col-span-3 lg:col-span-1">
                 <Label htmlFor="part">Select Part</Label>
-                <SearchableSelect
-                  options={partOptions}
-                  value={selectedPart}
-                  onChange={setSelectedPart}
-                  placeholder="Search or select part"
-                  searchPlaceholder="Search parts..."
-                  emptyMessage="No parts found"
-                />
+                <div className="relative">
+  <Input
+    placeholder="Search or select part"
+    value={partSearch}
+    onChange={(e) => setPartSearch(e.target.value)}
+    className="w-full"
+  />
+  {partSearch && filteredParts.length > 0 && (
+    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow max-h-60 overflow-y-auto">
+      {filteredParts.map((part) => (
+        <div
+          key={part._id}
+          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+          onClick={() => {
+            setSelectedPart(part._id);
+            setPartSearch("");
+          }}
+        >
+          {part.name} ({part.partNumber}) - ₹{part.price.toFixed(2)}
+        </div>
+      ))}
+    </div>
+  )}
+  {partSearch && filteredParts.length === 0 && (
+    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow px-4 py-2 text-sm text-muted-foreground">
+      No parts found
+    </div>
+  )}
+</div>
+
               </div>
               <div className="space-y-2">
                 <Label htmlFor="quantity">Quantity</Label>
@@ -552,9 +625,9 @@ const BillingPage = () => {
                       <TableRow key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                         <TableCell className="font-medium">{item.partName}</TableCell>
                         <TableCell>{item.partNumber}</TableCell>
-                        <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.unitPrice.toFixed(2)}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
-                        <TableCell>${item.discount.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.discount.toFixed(2)}</TableCell>
                         <TableCell className="font-semibold">${item.total.toFixed(2)}</TableCell>
                         <TableCell>
                           <Button
@@ -576,14 +649,14 @@ const BillingPage = () => {
             <div className="w-full flex flex-col items-end space-y-2 border-t pt-4">
               <div className="grid grid-cols-2 gap-x-4 text-right w-full md:w-1/2">
                 <span className="font-medium">Subtotal:</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toFixed(2)}</span>
                 <span className="font-medium">Tax ({tax}%):</span>
-                <span>${taxAmount.toFixed(2)}</span>
+                <span>₹{taxAmount.toFixed(2)}</span>
                 <span className="font-medium">Discount:</span>
-                <span>${totalDiscount.toFixed(2)}</span>
+                <span>₹{totalDiscount.toFixed(2)}</span>
                 <Separator className="col-span-2 my-1" />
                 <span className="font-bold text-lg">Total:</span>
-                <span className="font-bold text-lg text-blue-700">${total.toFixed(2)}</span>
+                <span className="font-bold text-lg text-blue-700">₹{total.toFixed(2)}</span>
               </div>
             </div>
             <div className="w-full flex gap-4 justify-end">

@@ -9,15 +9,13 @@ export interface Part {
   price: number;
   costPrice: number;
   stockQuantity: number;
-  manufacturer: string;
-  location: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface Customer {
   _id?: string;
-  id: string;
+  id?: string;
   name: string;
   phone: string;
   address: string;
@@ -87,20 +85,25 @@ export const fetchCustomers = async (): Promise<Customer[]> => {
 };
 
 export const addCustomer = async (
-  customer: Omit<Customer, '_id' | 'id'> // remove both _id and id
+  customer: Omit<Customer, '_id'>
 ): Promise<Customer> => {
-  const response = await fetch("http://localhost:5000/api/customers", {
+  console.log("Sending customer to backend:", customer);
+
+  const res = await fetch(`${BASE_URL}/customers`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(customer),
   });
 
-  if (!response.ok) {
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("Backend rejected:", errorText);
     throw new Error("Failed to add customer");
   }
 
-  return response.json();
+  return res.json();
 };
+
 
 
 // Invoices API
@@ -158,7 +161,7 @@ export const useApiWithToast = () => {
     fetchCustomersWithToast: (successMessage?: string) =>
       withToastHandling(() => fetchCustomers(), successMessage, "Failed to fetch customers"),
     addCustomerWithToast: (
-      customer: Omit<Customer, '_id' | 'id'>,
+      customer: Omit<Customer, '_id' >,
       successMessage = "Customer added successfully"
     ) =>
       withToastHandling(() => addCustomer(customer), successMessage, "Failed to add customer"),
