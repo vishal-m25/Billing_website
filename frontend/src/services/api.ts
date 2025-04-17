@@ -9,6 +9,8 @@ export interface Part {
   price: number;
   costPrice: number;
   stockQuantity: number;
+  manufacturer: string;
+  location: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
