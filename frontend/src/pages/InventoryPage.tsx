@@ -47,7 +47,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchParts, addPart, Part, updatePart } from "@/services/api";
+import { fetchParts, addPart, Part, updatePart, deletePart } from "@/services/api";
 import { useApiWithToast } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -145,6 +145,22 @@ const InventoryPage = () => {
     },
   });
 
+  const deletePartMutation = useMutation({
+    mutationFn: (id: string) => {return api.deletedataWithToast(id)},
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["parts"] });
+      setIsDialogOpen(false);
+      setIsEditMode(false);
+      setSelectedPart(null);
+      resetForm();
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deletePartMutation.mutate(id);
+    closeDialog();
+  };
+
   // Filter parts based on search term
   const filteredParts = parts.filter(
     (part) =>
@@ -196,7 +212,7 @@ const InventoryPage = () => {
         ...data,
       });
     } else {
-      addPartMutation.mutate(data);
+      addPartMutation.mutate(data as Omit<Part, "_id" | "createdAt" | "updatedAt">);
     }
   };
 
@@ -416,6 +432,15 @@ const InventoryPage = () => {
                   )}
                 />
                 <DialogFooter>
+                {isEditMode && (
+                    <Button
+                      disabled={updatePartMutation.isPending}
+                      onClick={() => handleDelete(selectedPart._id!) }
+
+                    >
+                      {deletePartMutation.isPending ? "Deleting.." : "Delete Part"}
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="outline"

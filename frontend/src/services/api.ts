@@ -59,7 +59,7 @@ export const fetchParts = async (): Promise<Part[]> => {
   return res.json();
 };
 
-export const addPart = async (part: Omit<Part, '_id' | 'createdAt' | 'updatedAt'>): Promise<Part> => {
+export const addPart = async (part: Omit<Part, "_id" | "createdAt" | "updatedAt">): Promise<Part> => {
   const res = await fetch(`${BASE_URL}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -78,6 +78,17 @@ export const updatePart = async (part: Partial<Part> & { _id: string }): Promise
   if (!res.ok) throw new Error("Failed to update part");
   return res.json();
 };
+
+export const deletePart = async (id: string): Promise<void> => {
+  const response = await fetch(`${BASE_URL}/products/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete part");
+  }
+};
+
 
 // Customers API
 export const fetchCustomers = async (): Promise<Customer[]> => {
@@ -162,12 +173,17 @@ export const useApiWithToast = () => {
 
     fetchCustomersWithToast: (successMessage?: string) =>
       withToastHandling(() => fetchCustomers(), successMessage, "Failed to fetch customers"),
+
     addCustomerWithToast: (
       customer: Omit<Customer, '_id' >,
       successMessage = "Customer added successfully"
     ) =>
       withToastHandling(() => addCustomer(customer), successMessage, "Failed to add customer"),
     
+      deletedataWithToast: (id:any,successMessage?: string) =>
+        withToastHandling(() => deletePart(id), successMessage, "Failed to delete data"),
+  
+
     fetchInvoicesWithToast: (successMessage?: string) =>
       withToastHandling(() => fetchInvoices(), successMessage, "Failed to fetch invoices"),
 
