@@ -209,6 +209,7 @@ const filteredParts = useMemo(() => {
   // Add item to invoice
   const addItem = () => {
     if (!selectedPart || quantity <= 0) {
+      
       toast({
         title: "Error",
         description: "Please select a part and enter a valid quantity",

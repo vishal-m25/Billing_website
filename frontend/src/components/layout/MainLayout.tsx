@@ -34,10 +34,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <div className="container flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Package size={28} />
-            <h1 className="text-xl font-bold">AutoParts Manager</h1>
+            <h1 className="text-xl font-bold">Balakumat Automobiles</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm hidden md:inline">Spare Parts Billing & Inventory System</span>
+            <span className="text-sm hidden md:inline">Billing & Inventory System</span>
             <Button variant="ghost" className="text-white" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
@@ -50,7 +50,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <aside className="w-64 bg-white shadow-md">
           <nav className="p-4 space-y-2">
             <Link
-              to="/"
+              to="/home"
               className={cn(
                 "flex items-center space-x-3 p-3 rounded-md transition-colors",
                 isActive("/")

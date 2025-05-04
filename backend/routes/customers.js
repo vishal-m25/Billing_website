@@ -4,12 +4,8 @@ const Customer = require('../models/customer.model');
 
 router.get('/', async (req, res) => {
   try {
-    if(req.body.id){
-      const customers=await Customer.findById(req.body.id);
-    }
-    else{
+
     const customers = await Customer.find();
-    }
     res.json(customers);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -58,19 +58,21 @@ const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
             </Button>
           </div>
         </div>
-        <ScrollArea className="h-[600px] rounded-md border p-4">
+        <ScrollArea className="h-[600px] rounded-md border p-4 pt-1">
           <div id="bill-content" className="p-6 bg-white">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold mb-2">AutoParts Manager</h1>
-              <p className="text-gray-500">Invoice</p>
+            <div className="text-right mb-6 border-b pb-3">
+              <h1 className="text-2xl font-bold mb-2">Balakumar Automobiles</h1>
+              <p className="text-gray-500">212, UTHUKULLI MAIN ROAD ,</p>
+              <p className="text-gray-500">KUNNATHUR - 638103</p>
+              <p className="text-gray-500"></p>
+
             </div>
-            
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-2 gap-6 mb-6 ">
               <div>
                 <h3 className="font-semibold mb-2">Bill To:</h3>
-                <p>{billData.customer.name}</p>
-                <p>{billData.customer.address}</p>
-                <p>{billData.customer.phone}</p>
+                <p className='ml-3'><strong>Name:</strong>{billData.customer.name}</p>
+                <p className='ml-3'><strong>Address:</strong>{billData.customer.address}</p>
+                <p className='ml-3'><strong>Phone:</strong>{billData.customer.phone}</p>
               </div>
               <div className="text-right">
                 <p><strong>Date:</strong> {billData.date}</p>
@@ -78,7 +80,7 @@ const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
               </div>
             </div>
 
-            <table className="w-full mb-6">
+            <table className="w-full mb-6 border-t">
               <thead className="border-b">
                 <tr>
                   <th className="py-2 text-left">Item</th>
@@ -102,7 +104,7 @@ const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
             </table>
 
             <div className="text-right">
-              <p className="text-xl font-bold">Total: ${billData.total.toFixed(2)}</p>
+              <p className="text-xl font-bold">Total: ₹{billData.total.toFixed(2)}</p>
             </div>
 
             <div className="mt-8 pt-8 border-t text-center text-gray-500">
