@@ -1,0 +1,118 @@
+
+import React from 'react';
+import { X, Printer, FileDown } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+interface BillPreviewProps {
+  isOpen: boolean;
+  onClose: () => void;
+  billData: {
+    customer: any;
+    items: any[];
+    total: number;
+    date: string;
+  };
+}
+
+const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
+  const handlePrint = () => {
+    const printContent = document.getElementById('bill-content');
+    if (printContent) {
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContent.innerHTML;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload();
+    }
+  };
+
+  const handlePrintAsPDF = () => {
+    const printContent = document.getElementById('bill-content');
+    if (printContent) {
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContent.innerHTML;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload();
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Bill Preview</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handlePrintAsPDF}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Save as PDF
+            </Button>
+            <Button variant="outline" onClick={handlePrint}>
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <ScrollArea className="h-[600px] rounded-md border p-4">
+          <div id="bill-content" className="p-6 bg-white">
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold mb-2">AutoParts Manager</h1>
+              <p className="text-gray-500">Invoice</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <h3 className="font-semibold mb-2">Bill To:</h3>
+                <p>{billData.customer.name}</p>
+                <p>{billData.customer.address}</p>
+                <p>{billData.customer.phone}</p>
+              </div>
+              <div className="text-right">
+                <p><strong>Date:</strong> {billData.date}</p>
+                <p><strong>Invoice #:</strong> {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+              </div>
+            </div>
+
+            <table className="w-full mb-6">
+              <thead className="border-b">
+                <tr>
+                  <th className="py-2 text-left">Item</th>
+                  <th className="py-2 text-right">Quantity</th>
+                  <th className="py-2 text-right">Price</th>
+                  <th className="py-2 text-right">Discount</th>
+                  <th className="py-2 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {billData.items.map((item, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="py-2">{item.partName}</td>
+                    <td className="py-2 text-right">{item.quantity}</td>
+                    <td className="py-2 text-right">₹{item.unitPrice.toFixed(2)}</td>
+                    <td className="py-2 text-right">₹{item.discount.toFixed(2)}</td>
+                    <td className="py-2 text-right">₹{(item.quantity * item.unitPrice).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="text-right">
+              <p className="text-xl font-bold">Total: ${billData.total.toFixed(2)}</p>
+            </div>
+
+            <div className="mt-8 pt-8 border-t text-center text-gray-500">
+              <p>Thank you for your business!</p>
+            </div>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default BillPreview;

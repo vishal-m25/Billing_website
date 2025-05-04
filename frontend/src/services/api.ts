@@ -96,6 +96,11 @@ export const fetchCustomers = async (): Promise<Customer[]> => {
   if (!res.ok) throw new Error("Failed to fetch customers");
   return res.json();
 };
+export const fetchCustomer = async (id:any): Promise<Customer[]> => {
+  const res = await fetch(`${BASE_URL}/customers/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch customer");
+  return res.json();
+};
 
 export const addCustomer = async (
   customer: Omit<Customer, '_id'>

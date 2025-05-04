@@ -1,20 +1,32 @@
 
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Package, FileText, Info } from "lucide-react";
-
+import { Package, FileText, Info, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const isActive = (path: string) => {
     return location.pathname === path;
+
   };
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+    navigate("/login");
+    };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -24,8 +36,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Package size={28} />
             <h1 className="text-xl font-bold">AutoParts Manager</h1>
           </div>
-          <span className="text-sm hidden md:inline">Spare Parts Billing & Inventory System</span>
-        </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm hidden md:inline">Spare Parts Billing & Inventory System</span>
+            <Button variant="ghost" className="text-white" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>        </div>
       </header>
 
       <div className="flex flex-1">

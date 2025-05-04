@@ -62,6 +62,7 @@ import { Plus, Trash2, FileText, Save, UserPlus, Receipt } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import BillPreview from "@/components/BillPreview";
 
 
 
@@ -80,6 +81,8 @@ type CustomerFormValues = z.infer<typeof customerSchema>;
 const BillingPage = () => {
   const { toast } = useToast();
   const api = useApiWithToast();
+  const [isBillPreviewOpen, setIsBillPreviewOpen] = useState(false);
+  const [currentBillData, setCurrentBillData] = useState<any>(null);
 
   // Customer form dialog state
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
@@ -118,7 +121,7 @@ const BillingPage = () => {
   });
 
   // Invoice state
-  const [selectedCustomer, setSelectedCustomer] = useState<string>("");
+  const [selectedCustomer, setSelectedCustomer] = useState<any>({});
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [selectedPart, setSelectedPart] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
@@ -173,7 +176,7 @@ const filteredCustomers = customers?.filter((c) =>
   
       // Auto-select the new customer using the returned _id
       if (newCustomer && newCustomer._id) {
-        setSelectedCustomer(newCustomer._id);
+        setSelectedCustomer(newCustomer);
       }
   
       // Close dialog and reset form
@@ -315,6 +318,29 @@ const filteredParts = useMemo(() => {
     );
   }
 
+
+  const handleGenerateBill = () => {
+    if (!selectedCustomer || invoiceItems.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a customer and add parts to the bill.",
+      });
+      return;
+    }
+
+    const billData = {
+      customer: selectedCustomer,
+      items: invoiceItems,
+      discount: totalDiscount,
+      total: total,
+      date: new Date().toLocaleDateString(),
+    };
+
+    setCurrentBillData(billData);
+    setIsBillPreviewOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -355,12 +381,10 @@ const filteredParts = useMemo(() => {
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Customer</DialogTitle>
-                      <DialogDescription>
-                        Enter customer details below to add them to your system.
-                      </DialogDescription>
-                    </DialogHeader>
+                  <DialogHeader>
+                    <DialogTitle>Add New Customer</DialogTitle>
+                    <DialogDescription>Fill in the customer details.</DialogDescription>
+                  </DialogHeader>
                     <Form {...customerForm}>
                       <form onSubmit={customerForm.handleSubmit(onCustomerSubmit)} className="space-y-4">
                         <FormField
@@ -425,7 +449,7 @@ const filteredParts = useMemo(() => {
           key={customer._id}
           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
           onClick={() => {
-            setSelectedCustomer(customer._id);
+            setSelectedCustomer(customer);
             setCustomerSearch("");
           }}
         >
@@ -447,20 +471,20 @@ const filteredParts = useMemo(() => {
               <div className="space-y-2 bg-blue-50 p-3 rounded-md text-sm">
                 <p>
                   <span className="font-medium">ID:</span>{" "}
-                  {customers.find((c) => c._id === selectedCustomer)?._id}
+                  {selectedCustomer.id}
                 </p>
                 <p>
                   <span className="font-medium">Name:</span>{" "}
-                  {customers.find((c) => c._id === selectedCustomer)?.name}
+                  {selectedCustomer.name}
                 </p>
                 <p>
                   <span className="font-medium">Phone:</span>{" "}
-                  {customers.find((c) => c._id === selectedCustomer)?.phone}
+                  {selectedCustomer.phone}
                 </p>
                 
                 <p>
                   <span className="font-medium">Address:</span>{" "}
-                  {customers.find((c) => c._id === selectedCustomer)?.address}
+                  {selectedCustomer.address}
                 </p>
               </div>
             )}
@@ -562,7 +586,7 @@ const filteredParts = useMemo(() => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="discount">Discount ($)</Label>
+                <Label htmlFor="discount">Discount (₹)</Label>
                 <Input
                   id="discount"
                   type="number"
@@ -660,16 +684,21 @@ const filteredParts = useMemo(() => {
               </div>
             </div>
             <div className="w-full flex gap-4 justify-end">
-              <Button variant="outline">
-                <FileText className="mr-2 h-4 w-4" /> Preview
-              </Button>
-              <Button onClick={handleCreateInvoice} className="bg-green-600 hover:bg-green-700">
-                <Save className="mr-2 h-4 w-4" /> Save Invoice
+
+              <Button onClick={handleGenerateBill} className="bg-green-600 hover:bg-green-700">
+                <Save className="mr-2 h-4 w-4" /> Generate Invoice
               </Button>
             </div>
           </CardFooter>
         </Card>
       </div>
+      {currentBillData && (
+        <BillPreview
+          isOpen={isBillPreviewOpen}
+          onClose={() => setIsBillPreviewOpen(false)}
+          billData={currentBillData}
+        />
+      )}
     </div>
   );
 };
