@@ -653,7 +653,7 @@ const filteredParts = useMemo(() => {
                         <TableCell>₹{item.unitPrice.toFixed(2)}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>₹{item.discount.toFixed(2)}</TableCell>
-                        <TableCell className="font-semibold">${item.total.toFixed(2)}</TableCell>
+                        <TableCell className="font-semibold">₹{item.total.toFixed(2)}</TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"

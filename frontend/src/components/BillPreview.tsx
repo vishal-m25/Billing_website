@@ -64,6 +64,7 @@ const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
               <h1 className="text-2xl font-bold mb-2">Balakumar Automobiles</h1>
               <p className="text-gray-500">212, UTHUKULLI MAIN ROAD ,</p>
               <p className="text-gray-500">KUNNATHUR - 638103</p>
+              <p className="text-gray-500"><strong>GSTIN:</strong>33AMOPC5336M1ZV</p>
               <p className="text-gray-500"></p>
 
             </div>
@@ -103,6 +104,7 @@ const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
               </tbody>
             </table>
 
+            
             <div className="text-right">
               <p className="text-xl font-bold">Total: ₹{billData.total.toFixed(2)}</p>
             </div>

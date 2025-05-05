@@ -55,9 +55,12 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-300 via-white to-blue-300 px-4 py-10">
       <Card className="w-[460px] shadow-2xl z-10 bg-white/90 backdrop-blur-md border border-gray-200">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-3xl font-bold tracking-tight">
-          AutoParts Manager
+      <CardTitle className="text-3xl font-bold tracking-tight">
+          Balakumar Automobiles
         </CardTitle>
+        {/* <CardTitle className="text-3xl font-bold tracking-tight">
+          AutoParts Manager
+        </CardTitle> */}
         <CardDescription>
           Enter your credentials to access the system
         </CardDescription>

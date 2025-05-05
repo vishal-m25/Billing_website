@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const connectDB = async () => {
-  const uri = process.env.MONGO_URI_REMOTE;
+  const uri = process.env.MONGO_URI_LOCAL;
 
   try {
     await mongoose.connect(uri);
