@@ -69,14 +69,54 @@ import BillPreview from "@/components/BillPreview";
 
 // Customer form schema
 const customerSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  phone: z.string().min(6, { message: "Phone number is required" }),
-  address: z.string().min(5, { message: "Address is required" }),
+  name: z
+    .string()
+    .min(2, "First name must be at least 2 characters")
+    .max(50, "First name must be at most 50 characters")
+    .regex(/^[a-zA-Z\s]+$/, "First name can only contain letters and spaces")
+    .default(''),
+
+
+
+  phone: z
+    .string()
+    .regex(/^\+?[1-9]\d{1,14}$/, "Enter a valid international phone number"),
+
+  address: z.object({
+    street: z
+      .string()
+      .min(5, "Street address must be at least 5 characters")
+      .max(100, "Street address too long"),
+
+    city: z
+      .string()
+      .min(2, "City must be at least 2 characters")
+      .max(50, "City too long")
+      .regex(/^[a-zA-Z\s]+$/, "City must contain only letters")
+      .default(""),
+
+    state: z
+      .string()
+      .min(2, "State must be at least 2 characters")
+      .max(50, "State too long")
+      .default(""),
+
+    zipCode: z
+      .string()
+      .regex(/^\d{5}(-\d{4})?$/, "Invalid US zip code"),
+
+    country: z
+      .string()
+      .min(2, "Country name too short")
+      .max(50, "Country name too long")
+      .regex(/^[a-zA-Z\s]+$/, "Country must contain only letters")
+      .default(""),
+
+  }),
 });
 
 
 
-type CustomerFormValues = z.infer<typeof customerSchema>;
 
 const BillingPage = () => {
   const { toast } = useToast();
@@ -88,15 +128,22 @@ const BillingPage = () => {
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   
   // Customer form setup
+  type CustomerFormValues = z.infer<typeof customerSchema>;
+
+  // ✅ useForm Setup
   const customerForm = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
       name: "",
       phone: "",
-      address: "",
-    }
-    
-    
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
+      },
+    },
   });
 
   // Fetch parts data
@@ -278,7 +325,6 @@ const filteredParts = useMemo(() => {
       tax: taxAmount,
       discount: totalDiscount,
       total,
-      status: "pending",
       paymentMethod,
       notes,
       dueDate: new Date(new Date().setDate(new Date().getDate() + 30)),
@@ -386,54 +432,111 @@ const filteredParts = useMemo(() => {
                     <DialogTitle>Add New Customer</DialogTitle>
                     <DialogDescription>Fill in the customer details.</DialogDescription>
                   </DialogHeader>
-                    <Form {...customerForm}>
-                      <form onSubmit={customerForm.handleSubmit(onCustomerSubmit)} className="space-y-4">
-                        <FormField
-                          control={customerForm.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Customer Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Full name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={customerForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Phone number" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={customerForm.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Address</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Full address" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <DialogFooter>
-                          <Button type="submit">Add Customer</Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
+                  <Form {...customerForm}>
+                    <form onSubmit={customerForm.handleSubmit(onCustomerSubmit)} className="space-y-4">
+                      <FormField
+                        control={customerForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="First name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      
+                      <FormField
+                        control={customerForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Phone number" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Address Fields */}
+                      <FormField
+                        control={customerForm.control}
+                        name="address.street"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Street</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Street address" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={customerForm.control}
+                        name="address.city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input placeholder="City" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={customerForm.control}
+                        name="address.state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State</FormLabel>
+                            <FormControl>
+                              <Input placeholder="State" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={customerForm.control}
+                        name="address.zipCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Zip Code</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Zip code" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={customerForm.control}
+                        name="address.country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Country" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <DialogFooter>
+                        <Button type="submit">Add Customer</Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
                   </DialogContent>
+
                 </Dialog>
               </div>
               <div className="relative">
@@ -468,7 +571,7 @@ const filteredParts = useMemo(() => {
 
 
             </div>
-            {selectedCustomer && (
+            {selectedCustomer.name && (
               <div className="space-y-2 bg-blue-50 p-3 rounded-md text-sm">
                 <p>
                   <span className="font-medium">ID:</span>{" "}
@@ -485,7 +588,7 @@ const filteredParts = useMemo(() => {
                 
                 <p>
                   <span className="font-medium">Address:</span>{" "}
-                  {selectedCustomer.address}
+                  {selectedCustomer.street+","+selectedCustomer.city+","+selectedCustomer.state+","+selectedCustomer.country+"-"+selectedCustomer.zipCode}
                 </p>
               </div>
             )}

@@ -9,6 +9,8 @@ import BillingPage from "./pages/BillingPage";
 import InventoryPage from "./pages/InventoryPage";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
+import CustomerPage from "./pages/CustomerPage";
+import InvoicePage from "./pages/InvoicePage";
 
 
 
@@ -54,6 +56,26 @@ const App = () => (
               <PrivateRoute>
                 <MainLayout>
                   <InventoryPage />
+                </MainLayout>
+              </PrivateRoute>
+            }
+          />
+                    <Route
+            path="/customers"
+            element={
+              <PrivateRoute>
+                <MainLayout>
+                  <CustomerPage />
+                </MainLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/invoices"
+            element={
+              <PrivateRoute>
+                <MainLayout>
+                  <InvoicePage />
                 </MainLayout>
               </PrivateRoute>
             }

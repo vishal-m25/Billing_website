@@ -45,7 +45,13 @@ router.post('/', async (req, res) => {
       id: await generateCustomerId(),
       name: req.body.name,
       phone: req.body.phone,
-      address: req.body.address,
+      address: {
+        street: req.body.address.street,
+        city: req.body.address.city,
+        state: req.body.address.state,
+        zipCode: req.body.address.zipCode,
+        country: req.body.address.country,
+      },
     });
 
     const saved = await newCustomer.save();
@@ -53,6 +59,23 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error("Customer creation error:", err.message);
     res.status(400).json({ message: err.message });
+  }
+});
+
+// DELETE /customers/:id
+router.delete('/:id', async (req, res) => {
+  try {
+    console.log("delete customer recieved",req.params.id);
+    const deletedCustomer = await Customer.findOneAndDelete({ _id: req.params.id });
+
+    if (!deletedCustomer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    res.status(204).send(); // No Content
+  } catch (err) {
+    console.error('Error deleting customer:', err.message);
+    res.status(500).json({ message: err.message });
   }
 });
 

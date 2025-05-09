@@ -20,8 +20,18 @@ export interface Customer {
   id?: string;
   name: string;
   phone: string;
-  address: string;
+  address: CustomerAddress;
 }
+
+export interface CustomerAddress {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+
 
 
 export interface InvoiceItem {
@@ -43,7 +53,6 @@ export interface Invoice {
   tax: number;
   discount: number;
   total: number;
-  status: "paid" | "pending" | "overdue";
   paymentMethod: string;
   notes: string;
   createdAt?: Date;
@@ -103,24 +112,85 @@ export const fetchCustomer = async (id:any): Promise<Customer[]> => {
 };
 
 export const addCustomer = async (
-  customer: Omit<Customer, '_id'>
+  customer: Omit<Customer, "_id">
 ): Promise<Customer> => {
-  console.log("Sending customer to backend:", customer);
+  if (!customer.name || !customer.phone || 
+    !customer.address || !customer.address.street || !customer.address.zipCode) {
+  throw new Error("All required customer fields are missing");
+}
+  try {
+    console.log("Sending customer to backend:", customer);
 
-  const res = await fetch(`${BASE_URL}/customers`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(customer),
-  });
+    const res = await fetch(`${BASE_URL}/customers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(customer),
+    });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error("Backend rejected:", errorText);
-    throw new Error("Failed to add customer");
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Backend rejected the request:", errorText);
+      throw new Error(`Failed to add customer: ${res.status} ${res.statusText}`);
+    }
+
+    const result: Customer = await res.json();
+    console.log("Customer added successfully:", result);
+    return result;
+  } catch (error) {
+    console.error("Error adding customer:", error);
+    throw error;
   }
-
-  return res.json();
 };
+
+export const updateCustomer = async (customer: Partial<Customer> & { _id: string }): Promise<Customer> => {
+
+    console.log("Updating customer through API:", customer);
+
+    
+    try {
+      const response = await fetch(`${BASE_URL}/customers/${customer._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(customer),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error updating customer: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error updating customer:", error);
+      throw error;
+    }
+  };
+  
+  
+
+export const deleteCustomer = async (customerId: string): Promise<boolean> => {
+
+    console.log("Deleting customer through API:", customerId);
+
+    
+    try {
+      const response = await fetch(`${BASE_URL}/customers/${customerId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error deleting customer: ${response.status}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      throw error;
+    }
+  };
+
 
 
 
@@ -140,6 +210,28 @@ export const createInvoice = async (invoice: Omit<Invoice, '_id' | 'createdAt'>)
   if (!res.ok) throw new Error("Failed to create invoice");
   return res.json();
 };
+
+export const getInvoiceById = async (invoiceId: string): Promise<Invoice> => {
+
+    console.log("Fetching invoice details from API:", invoiceId);
+ 
+    
+    try {
+      const response = await fetch(`${BASE_URL}/invoices/${invoiceId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching invoice: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching invoice:", error);
+      throw error;
+    }
+  };
+  
+  
 
 // Toast API Wrapper
 export const useApiWithToast = () => {
@@ -188,6 +280,11 @@ export const useApiWithToast = () => {
       deletedataWithToast: (id:any,successMessage?: string) =>
         withToastHandling(() => deletePart(id), successMessage, "Failed to delete data"),
   
+      updateCustomerWithToast: (customer: Partial<Customer> & { _id: string }, successMessage = "Customer updated successfully") =>
+        withToastHandling(() => updateCustomer(customer), successMessage, "Failed to update customer"),
+      
+      deleteCustomerWithToast: (customerId: string, successMessage = "Customer deleted successfully") =>
+        withToastHandling(() => deleteCustomer(customerId), successMessage, "Failed to delete customer"),
 
     fetchInvoicesWithToast: (successMessage?: string) =>
       withToastHandling(() => fetchInvoices(), successMessage, "Failed to fetch invoices"),

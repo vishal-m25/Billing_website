@@ -3,8 +3,8 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Package, FileText, Info, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Package, FileText, Info, LogOut, Users, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -46,8 +46,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </header>
 
       <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-md">
+          {/* Sidebar - Collapsible on mobile */}
+          <aside className="w-64 bg-white shadow-md hidden md:block">
           <nav className="p-4 space-y-2">
             <Link
               to="/home"
@@ -73,6 +73,30 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <Package size={20} />
               <span className="font-medium">Inventory</span>
             </Link>
+            <Link
+              to="/customers"
+              className={cn(
+                "flex items-center space-x-3 p-3 rounded-md transition-colors",
+                isActive("/customers")
+                  ? "bg-app-blue text-white"
+                  : "text-gray-700 hover:bg-app-blue-light hover:text-app-blue-dark"
+              )}
+            >
+              <Users size={20} />
+              <span className="font-medium">Customers</span>
+            </Link>
+            <Link
+              to="/invoices"
+              className={cn(
+                "flex items-center space-x-3 p-3 rounded-md transition-colors",
+                isActive("/invoices")
+                  ? "bg-app-blue text-white"
+                  : "text-gray-700 hover:bg-app-blue-light hover:text-app-blue-dark"
+              )}
+            >
+              <Receipt size={20} />
+              <span className="font-medium">Invoices</span>
+            </Link>
           </nav>
           
         </aside>
@@ -83,8 +107,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </main>
       </div>
 
-      <footer className="bg-app-gray-dark text-white p-3 text-center text-sm">
-        <div className="container">
+      <footer className="bg-app-gray-dark text-white p-3 text-center text-sm hidden md:block">
+         <div className="container">
           <p>© {new Date().getFullYear()} AutoParts Manager. All rights reserved.</p>
         </div>
       </footer>
