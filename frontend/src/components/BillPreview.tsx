@@ -4,6 +4,7 @@ import { X, Printer, FileDown } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Customer, CustomerAddress } from '@/services/api';
 
 interface BillPreviewProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface BillPreviewProps {
     date: string;
   };
 }
+
 
 const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
   const handlePrint = () => {
@@ -38,6 +40,33 @@ const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
       window.location.reload();
     }
   };
+  const defaultAddress: CustomerAddress = {
+    street: 'N/A',
+    city: 'N/A',
+    state: 'N/A',
+    zipCode: 'N/A',
+    country: 'N/A'
+  };
+  
+  const customer: Customer = billData?.customer || { 
+    name: 'N/A', 
+    address: defaultAddress, 
+    phone: 'N/A', 
+    email: 'N/A' 
+  };
+  const formatAddress = (customer: Customer) => {
+        if (!customer || !customer.address) return 'N/A';
+        
+        const { address } = customer;
+        const addressParts = [
+          address.street,
+          address.city,
+          `${address.state} ${address.zipCode}`,
+          address.country
+        ].filter(Boolean);
+        
+        return addressParts.join(', ');
+      };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -72,7 +101,7 @@ const BillPreview = ({ isOpen, onClose, billData }: BillPreviewProps) => {
               <div>
                 <h3 className="font-semibold mb-2">Bill To:</h3>
                 <p className='ml-3'><strong>Name:</strong>{billData.customer.name}</p>
-                <p className='ml-3'><strong>Address:</strong>{billData.customer.address}</p>
+                <p className='ml-3'><strong>Address:</strong>{formatAddress(customer)}</p>
                 <p className='ml-3'><strong>Phone:</strong>{billData.customer.phone}</p>
               </div>
               <div className="text-right">

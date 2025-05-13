@@ -1,5 +1,16 @@
 import { useToast } from "@/components/ui/use-toast";
 
+
+export interface AuthResponse {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+}
+}
+
 export interface Part {
   _id?: string;
   name: string;
@@ -59,7 +70,101 @@ export interface Invoice {
   dueDate: Date;
 }
 
-const BASE_URL = "http://localhost:5000/api";
+
+export interface RegisterFormData {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  phone: string;
+}
+
+export interface LoginFormData {
+  username: string;
+  password: string;
+}
+
+
+
+const BASE_URL =  "http://localhost:5000/api";
+
+
+const apiRequest = async <T>(
+  endpoint: string,
+  method: string = 'GET',
+  data?: any
+): Promise<T> => {
+  const token = localStorage.getItem('authToken');
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`API request error: ${endpoint}`, error);
+    throw error;
+  }
+};
+
+
+
+
+  
+
+
+export const loginUser = async (credentials: LoginFormData): Promise<AuthResponse> => {
+  console.log("Logging in user:", credentials.username);
+  return await apiRequest<AuthResponse>('/auth/login', 'POST', credentials);
+};
+
+export const registerUser = async (userData: RegisterFormData): Promise<AuthResponse> => {
+  console.log("Registering new user:", userData.email);
+  return await apiRequest<AuthResponse>('/auth/register', 'POST', userData);
+};
+
+export const verifyOtp = async (email: string, otp: string): Promise<{ success: boolean }> => {
+  console.log("Verifying OTP for:", email);
+  return await apiRequest<{ success: boolean }>('/auth/verify-otp', 'POST', { email, otp });
+};
+
+export const resetPassword = async (email: string): Promise<{ success: boolean }> => {
+  console.log("Requesting password reset for:", email);
+  return await apiRequest<{ success: boolean }>('/auth/reset-password', 'POST', { email });
+};
+
+export const updatePassword = async (token: string, password: string): Promise<{ success: boolean }> => {
+  console.log("Updating password with token");
+  return await apiRequest<{ success: boolean }>('/auth/update-password', 'POST', { token, password });
+};
+
+export const logout = () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('isAuthenticated');
+  localStorage.removeItem('userData');
+};
+
+
+
+
+
+
 
 // Parts API
 export const fetchParts = async (): Promise<Part[]> => {
@@ -101,14 +206,11 @@ export const deletePart = async (id: string): Promise<void> => {
 
 // Customers API
 export const fetchCustomers = async (): Promise<Customer[]> => {
-  const res = await fetch(`${BASE_URL}/customers`);
-  if (!res.ok) throw new Error("Failed to fetch customers");
-  return res.json();
+  return await apiRequest<Customer[]>('/customers');
 };
 export const fetchCustomer = async (id:any): Promise<Customer[]> => {
-  const res = await fetch(`${BASE_URL}/customers/${id}`);
-  if (!res.ok) throw new Error("Failed to fetch customer");
-  return res.json();
+  console.log("Searching for customer by name:", id);
+  return await apiRequest<Customer[]>(`/customers/search?name=${encodeURIComponent(id)}`);
 };
 
 export const addCustomer = async (
@@ -118,28 +220,7 @@ export const addCustomer = async (
     !customer.address || !customer.address.street || !customer.address.zipCode) {
   throw new Error("All required customer fields are missing");
 }
-  try {
-    console.log("Sending customer to backend:", customer);
-
-    const res = await fetch(`${BASE_URL}/customers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(customer),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Backend rejected the request:", errorText);
-      throw new Error(`Failed to add customer: ${res.status} ${res.statusText}`);
-    }
-
-    const result: Customer = await res.json();
-    console.log("Customer added successfully:", result);
-    return result;
-  } catch (error) {
-    console.error("Error adding customer:", error);
-    throw error;
-  }
+  return await apiRequest<Customer>('/customers', 'POST', customer);
 };
 
 export const updateCustomer = async (customer: Partial<Customer> & { _id: string }): Promise<Customer> => {
@@ -147,25 +228,7 @@ export const updateCustomer = async (customer: Partial<Customer> & { _id: string
     console.log("Updating customer through API:", customer);
 
     
-    try {
-      const response = await fetch(`${BASE_URL}/customers/${customer._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(customer),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error updating customer: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error updating customer:", error);
-      throw error;
-    }
+    return await apiRequest<Customer>(`/customers/${customer._id}`, 'PUT', customer);
   };
   
   
@@ -175,20 +238,8 @@ export const deleteCustomer = async (customerId: string): Promise<boolean> => {
     console.log("Deleting customer through API:", customerId);
 
     
-    try {
-      const response = await fetch(`${BASE_URL}/customers/${customerId}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error deleting customer: ${response.status}`);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Error deleting customer:", error);
-      throw error;
-    }
+      await apiRequest<void>(`/customers/${customerId}`, 'DELETE');
+  return true;
   };
 
 
@@ -196,42 +247,48 @@ export const deleteCustomer = async (customerId: string): Promise<boolean> => {
 
 // Invoices API
 export const fetchInvoices = async (): Promise<Invoice[]> => {
-  const res = await fetch(`${BASE_URL}/invoices`);
-  if (!res.ok) throw new Error("Failed to fetch invoices");
-  return res.json();
+  console.log("Fetching invoices from API...");
+  return await apiRequest<Invoice[]>('/invoices');
 };
 
 export const createInvoice = async (invoice: Omit<Invoice, '_id' | 'createdAt'>): Promise<Invoice> => {
-  const res = await fetch(`${BASE_URL}/invoices`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(invoice)
-  });
-  if (!res.ok) throw new Error("Failed to create invoice");
-  return res.json();
+  console.log("Creating invoice through API:", invoice);
+  return await apiRequest<Invoice>('/invoices', 'POST', invoice);
 };
 
 export const getInvoiceById = async (invoiceId: string): Promise<Invoice> => {
+  console.log("Fetching invoice details from API:", invoiceId);
+  return await apiRequest<Invoice>(`/invoices/${invoiceId}`);
+};
 
-    console.log("Fetching invoice details from API:", invoiceId);
+export const updateInvoiceStatus = async (invoiceId: string, status: "paid" | "pending" | "overdue"): Promise<Invoice> => {
+  console.log(`Updating invoice ${invoiceId} status to ${status}`);
+  return await apiRequest<Invoice>(`/invoices/${invoiceId}/status`, 'PUT', { status });
+};
+
+export const deleteInvoice = async (invoiceId: string): Promise<boolean> => {
+  console.log("Deleting invoice:", invoiceId);
+  await apiRequest<void>(`/invoices/${invoiceId}`, 'DELETE');
+  return true;
+};
+
+export const getInvoicesByCustomerId = async (customerId: string): Promise<Invoice[]> => {
+  console.log("Fetching invoices for customer:", customerId);
+  return await apiRequest<Invoice[]>(`/invoices/customer/${customerId}`);
+};
+
+export const getDashboardStats = async (): Promise<{
+  totalSales: number;
+  totalInvoices: number;
+  totalCustomers: number;
+  lowStockItems: Part[];
+  recentInvoices: Invoice[];
+  salesByMonth: { month: string; sales: number }[];
+}> => {
+  console.log("Fetching dashboard statistics");
+  return await apiRequest<any>('/dashboard/stats');
+};
  
-    
-    try {
-      const response = await fetch(`${BASE_URL}/invoices/${invoiceId}`);
-      
-      if (!response.ok) {
-        throw new Error(`Error fetching invoice: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching invoice:", error);
-      throw error;
-    }
-  };
-  
-  
 
 // Toast API Wrapper
 export const useApiWithToast = () => {
@@ -259,6 +316,15 @@ export const useApiWithToast = () => {
   };
 
   return {
+
+    loginWithToast: (credentials: LoginFormData, successMessage = "Login successful") =>
+      withToastHandling(() => loginUser(credentials), successMessage, "Login failed"),
+    
+    registerWithToast: (userData: RegisterFormData, successMessage = "Registration successful") =>
+      withToastHandling(() => registerUser(userData), successMessage, "Registration failed"),
+    
+
+
     fetchPartsWithToast: (successMessage?: string) =>
       withToastHandling(() => fetchParts(), successMessage, "Failed to fetch parts"),
 
@@ -268,28 +334,39 @@ export const useApiWithToast = () => {
     updatePartWithToast: (part: Partial<Part> & { _id: string }, successMessage = "Part updated successfully") =>
       withToastHandling(() => updatePart(part), successMessage, "Failed to update part"),
 
+
+
+
     fetchCustomersWithToast: (successMessage?: string) =>
       withToastHandling(() => fetchCustomers(), successMessage, "Failed to fetch customers"),
 
-    addCustomerWithToast: (
-      customer: Omit<Customer, '_id' >,
-      successMessage = "Customer added successfully"
-    ) =>
+    addCustomerWithToast: (customer: Omit<Customer, '_id' >,
+      successMessage = "Customer added successfully") => 
       withToastHandling(() => addCustomer(customer), successMessage, "Failed to add customer"),
     
-      deletedataWithToast: (id:any,successMessage?: string) =>
-        withToastHandling(() => deletePart(id), successMessage, "Failed to delete data"),
-  
       updateCustomerWithToast: (customer: Partial<Customer> & { _id: string }, successMessage = "Customer updated successfully") =>
         withToastHandling(() => updateCustomer(customer), successMessage, "Failed to update customer"),
       
       deleteCustomerWithToast: (customerId: string, successMessage = "Customer deleted successfully") =>
         withToastHandling(() => deleteCustomer(customerId), successMessage, "Failed to delete customer"),
 
+
+
+      deletedataWithToast: (id:any,successMessage?: string) =>
+        withToastHandling(() => deletePart(id), successMessage, "Failed to delete data"),
+  
+   
     fetchInvoicesWithToast: (successMessage?: string) =>
       withToastHandling(() => fetchInvoices(), successMessage, "Failed to fetch invoices"),
 
     createInvoiceWithToast: (invoice: Omit<Invoice, '_id' | 'createdAt'>, successMessage = "Invoice created successfully") =>
       withToastHandling(() => createInvoice(invoice), successMessage, "Failed to create invoice"),
+
+    updateInvoiceStatusWithToast: (invoiceId: string, status: "paid" | "pending" | "overdue", successMessage = "Invoice status updated") =>
+      withToastHandling(() => updateInvoiceStatus(invoiceId, status), successMessage, "Failed to update invoice status"),
+    
+    deleteInvoiceWithToast: (invoiceId: string, successMessage = "Invoice deleted successfully") =>
+      withToastHandling(() => deleteInvoice(invoiceId), successMessage, "Failed to delete invoice"),
+    
   };
 };

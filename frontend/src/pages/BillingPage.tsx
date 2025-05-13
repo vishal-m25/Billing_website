@@ -50,15 +50,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { 
   fetchParts, 
   fetchCustomers, 
-  createInvoice, 
-  addCustomer,
-  Part, 
   Customer, 
   InvoiceItem, 
   Invoice 
 } from "@/services/api";
 import { useApiWithToast } from "@/services/api";
-import { Plus, Trash2, FileText, Save, UserPlus, Receipt } from "lucide-react";
+import { Plus, Trash2, Save, UserPlus, Receipt } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -103,7 +100,7 @@ const customerSchema = z.object({
 
     zipCode: z
       .string()
-      .regex(/^\d{5}(-\d{4})?$/, "Invalid US zip code"),
+      .regex(/^\d{6}/, "Invalid US zip code"),
 
     country: z
       .string()
