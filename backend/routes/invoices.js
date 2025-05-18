@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Invoice = require('../models/Invoice');
+const Invoice = require('../models/Invoice.model');
 
 router.get('/', async (req, res) => {
   const invoices = await Invoice.find().populate('customer').populate('items.partId');

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Customer = require('../models/customer.model');
-const invoice = require('../models/Invoice')
+const invoice = require('../models/Invoice.model')
 
 router.get('/:id/invoices', async (req, res) => {
     try {

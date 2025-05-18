@@ -1,5 +1,5 @@
-const Invoice = require('../models/Invoice');
-const Customer = require('../models/Customer');
+const Invoice = require('../models/Invoice.model');
+const Customer = require('../models/customer.model');
 
 exports.createInvoice = async (req, res) => {
   try {

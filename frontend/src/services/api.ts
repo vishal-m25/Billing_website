@@ -128,7 +128,7 @@ const apiRequest = async <T>(
 
   
 
-
+// login and register requests
 export const loginUser = async (credentials: LoginFormData): Promise<AuthResponse> => {
   console.log("Logging in user:", credentials.username);
   return await apiRequest<AuthResponse>('/auth/login', 'POST', credentials);
@@ -137,6 +137,11 @@ export const loginUser = async (credentials: LoginFormData): Promise<AuthRespons
 export const registerUser = async (userData: RegisterFormData): Promise<AuthResponse> => {
   console.log("Registering new user:", userData.email);
   return await apiRequest<AuthResponse>('/auth/register', 'POST', userData);
+};
+
+export const requestOtp = async (email: string): Promise<{ success: boolean }> => {
+  console.log("Verifying OTP for:", email);
+  return await apiRequest<{ success: boolean }>('/auth/request-otp', 'POST', { email });
 };
 
 export const verifyOtp = async (email: string, otp: string): Promise<{ success: boolean }> => {

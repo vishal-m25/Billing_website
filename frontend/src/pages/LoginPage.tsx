@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { loginUser, registerUser,requestOtp, verifyOtp, resetPassword, updatePassword, LoginFormData, RegisterFormData } from "@/services/api"
 
 const formSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -58,7 +59,7 @@ const LoginPage = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [registrationData, setRegistrationData] = useState<any>(null);
-  
+
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -86,78 +87,88 @@ const LoginPage = () => {
     },
   });
 
-  const handleLogin = (values: z.infer<typeof loginSchema>) => {
-    if (values.username === DEMO_USER.username && values.password === DEMO_USER.password) {
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/home");
-      toast({
-        title: "Welcome back!",
-        description: "Successfully logged in.",
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Invalid credentials. Please try again.",
-      });
-    }
-  };
-
-  const handleRegister = (values: z.infer<typeof registerSchema>) => {
-    // In a real app, this would send the registration data to a backend
-    setRegistrationData(values);
-    setShowOtpVerification(true);
-    
+  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+  try {
+    const res = await loginUser(values as LoginFormData);
+    localStorage.setItem("authToken", res.token);
     toast({
-      title: "Verification code sent",
-      description: "Please check your phone for the OTP. (Use 123456 for demo)",
+      title: "Login successful",
+      description: `Welcome back, ${res.user.name}`,
     });
-  };
+    navigate("/home"); // Update as needed
+  } catch (error: any) {
+    toast({
+      variant: "destructive",
+      title: "Login failed",
+      description: error.message || "Invalid credentials",
+    });
+  }
+};
 
-  const handleVerifyOTP = (values: z.infer<typeof otpSchema>) => {
-    // For demo purposes, we'll check if OTP is "123456"
-    if (values.otp === DEMO_USER.phone) {
-      // In a real app, this would create a new user in the database
-      toast({
-        title: "Registration successful!",
-        description: "You can now login with your credentials.",
-      });
+
+  const handleRegister = async (values: z.infer<typeof registerSchema>) => {
+  try {
+    setRegistrationData(values); // needed for OTP screen
+    setShowOtpVerification(true);
+    await requestOtp(registrationData.email);
+
+    toast({
+      title: "OTP sent",
+      description: "Please check your email/phone for the verification code",
+    });
+  } catch (error: any) {
+    toast({
+      variant: "destructive",
+      title: "Registration failed",
+      description: error.message || "Something went wrong",
+    });
+  }
+};
+
+  const handleVerifyOTP = async (values: z.infer<typeof otpSchema>) => {
+  try {
+    const res = await verifyOtp(registrationData.email, values.otp);
+    await registerUser(values as RegisterFormData);
+    if (res.success) {
+      toast({ title: "Registration successful!" });
       setShowOtpVerification(false);
       setActiveTab("login");
-      
-      // Pre-fill login form with the registered email
       loginForm.setValue("username", registrationData.email);
     } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Invalid OTP. Please try again.",
-      });
+      throw new Error("Invalid OTP");
     }
-  };
+  } catch (error: any) {
+    toast({
+      variant: "destructive",
+      title: "OTP verification failed",
+      description: error.message,
+    });
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md shadow-xl">
-      <CardHeader className="space-y-1 text-center">
-      <CardTitle className="text-3xl font-bold tracking-tight">
-          Balakumar Automobiles
-        </CardTitle>
-        {/* <CardTitle className="text-3xl font-bold tracking-tight">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-3xl font-bold tracking-tight">
+            Balakumar Automobiles
+          </CardTitle>
+          {/* <CardTitle className="text-3xl font-bold tracking-tight">
           AutoParts Manager
         </CardTitle> */}
-        <CardDescription>
-          Enter your credentials to access the system
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-      {showOtpVerification ? (
+          <CardDescription>
+            Enter your credentials to access the system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {showOtpVerification ? (
             <div className="space-y-4">
               <h2 className="text-lg font-medium text-center">Verify your phone number</h2>
               <p className="text-center text-sm text-muted-foreground">
                 We've sent a 6-digit verification code to your phone
               </p>
-              
+
               <Form {...otpForm}>
                 <form onSubmit={otpForm.handleSubmit(handleVerifyOTP)} className="space-y-4">
                   <FormField
@@ -181,11 +192,11 @@ const LoginPage = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       className="w-full"
                       onClick={() => setShowOtpVerification(false)}
                     >
@@ -204,7 +215,7 @@ const LoginPage = () => {
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="login">
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
@@ -215,8 +226,8 @@ const LoginPage = () => {
                         <FormItem>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                placeholder="Username or Email" 
+                              <Input
+                                placeholder="Username or Email"
                                 {...field}
                                 className="pl-10"
                               />
@@ -234,9 +245,9 @@ const LoginPage = () => {
                         <FormItem>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                type="password" 
-                                placeholder="Password" 
+                              <Input
+                                type="password"
+                                placeholder="Password"
                                 {...field}
                                 className="pl-10"
                               />
@@ -253,7 +264,7 @@ const LoginPage = () => {
                   </form>
                 </Form>
               </TabsContent>
-              
+
               <TabsContent value="register">
                 <Form {...registerForm}>
                   <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
@@ -264,12 +275,12 @@ const LoginPage = () => {
                         <FormItem>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                placeholder="Full Name" 
+                              <Input
+                                placeholder="Full Name"
                                 {...field}
                                 className="pl-10"
                               />
-                                                            <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                              <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -283,9 +294,9 @@ const LoginPage = () => {
                         <FormItem>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                type="email" 
-                                placeholder="Email" 
+                              <Input
+                                type="email"
+                                placeholder="Email"
                                 {...field}
                                 className="pl-10"
                               />
@@ -303,8 +314,8 @@ const LoginPage = () => {
                         <FormItem>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                placeholder="Phone Number" 
+                              <Input
+                                placeholder="Phone Number"
                                 {...field}
                                 className="pl-10"
                               />
@@ -322,9 +333,9 @@ const LoginPage = () => {
                         <FormItem>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                type="password" 
-                                placeholder="Password" 
+                              <Input
+                                type="password"
+                                placeholder="Password"
                                 {...field}
                                 className="pl-10"
                               />
@@ -342,9 +353,9 @@ const LoginPage = () => {
                         <FormItem>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                type="password" 
-                                placeholder="Confirm Password" 
+                              <Input
+                                type="password"
+                                placeholder="Confirm Password"
                                 {...field}
                                 className="pl-10"
                               />
@@ -364,9 +375,9 @@ const LoginPage = () => {
               </TabsContent>
             </Tabs>
           )}
-      </CardContent>
-    </Card>
-  </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

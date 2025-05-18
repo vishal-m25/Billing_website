@@ -1,26 +1,9 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import MainLayout from "./components/layout/MainLayout";
-import BillingPage from "./pages/BillingPage";
-import InventoryPage from "./pages/InventoryPage";
-import NotFound from "./pages/NotFound";
-import LoginPage from "./pages/LoginPage";
-import CustomerPage from "./pages/CustomerPage";
-import InvoicePage from "./pages/InvoicePage";
-
-
-
-
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
-
-
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router"; // 👈 import the new router
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,53 +19,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-        <Route path="/" element={<LoginPage />} />
-
-          <Route
-            path="/home"
-            element={
-              <PrivateRoute>
-                <MainLayout>
-                  <BillingPage />
-                </MainLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/inventory"
-            element={
-              <PrivateRoute>
-                <MainLayout>
-                  <InventoryPage />
-                </MainLayout>
-              </PrivateRoute>
-            }
-          />
-                    <Route
-            path="/customers"
-            element={
-              <PrivateRoute>
-                <MainLayout>
-                  <CustomerPage />
-                </MainLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/invoices"
-            element={
-              <PrivateRoute>
-                <MainLayout>
-                  <InvoicePage />
-                </MainLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <RouterProvider router={router} /> {/* 👈 use RouterProvider */}
     </TooltipProvider>
   </QueryClientProvider>
 );
