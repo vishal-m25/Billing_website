@@ -26,6 +26,7 @@ class EmailService {
             <h1>your otp is  <span style="color:red;">${otp}</span>  </h1>
             `;
         await this.transport.sendMail(this.mailOption);
+        console.log("otp sent to"+email);
     }
 
     async sendPasswordResetToken(email, token) {

@@ -144,9 +144,11 @@ export const requestOtp = async (email: string): Promise<{ success: boolean }> =
   return await apiRequest<{ success: boolean }>('/auth/request-otp', 'POST', { email });
 };
 
-export const verifyOtp = async (email: string, otp: string): Promise<{ success: boolean }> => {
-  console.log("Verifying OTP for:", email);
-  return await apiRequest<{ success: boolean }>('/auth/verify-otp', 'POST', { email, otp });
+export const verifyOtp = async (email: string, otp: string): Promise<{
+  status: any 
+}> => {
+  console.log("Verifying OTP for:", email, otp);
+  return await apiRequest<{ status: boolean }>('/auth/verify-otp', 'POST', { email, otp });
 };
 
 export const resetPassword = async (email: string): Promise<{ success: boolean }> => {

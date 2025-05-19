@@ -6,13 +6,13 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Lock, LogIn, Mail, Phone, User, UserPlus } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { loginUser, registerUser,requestOtp, verifyOtp, resetPassword, updatePassword, LoginFormData, RegisterFormData } from "@/services/api"
+import { loginUser, registerUser,requestOtp, verifyOtp, LoginFormData, RegisterFormData } from "@/services/api"
 
 const formSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -108,7 +108,7 @@ const LoginPage = () => {
 
   const handleRegister = async (values: z.infer<typeof registerSchema>) => {
   try {
-    setRegistrationData(values); // needed for OTP screen
+    await setRegistrationData(values); // needed for OTP screen
     setShowOtpVerification(true);
     await requestOtp(registrationData.email);
 
@@ -127,9 +127,10 @@ const LoginPage = () => {
 
   const handleVerifyOTP = async (values: z.infer<typeof otpSchema>) => {
   try {
+
     const res = await verifyOtp(registrationData.email, values.otp);
-    await registerUser(values as RegisterFormData);
-    if (res.success) {
+    if (res.status) {
+      await registerUser(registrationData);
       toast({ title: "Registration successful!" });
       setShowOtpVerification(false);
       setActiveTab("login");
@@ -164,51 +165,60 @@ const LoginPage = () => {
         <CardContent>
           {showOtpVerification ? (
             <div className="space-y-4">
-              <h2 className="text-lg font-medium text-center">Verify your phone number</h2>
-              <p className="text-center text-sm text-muted-foreground">
-                We've sent a 6-digit verification code to your phone
-              </p>
+  <h2 className="text-lg font-medium text-center">Verify your phone number</h2>
+  <p className="text-center text-sm text-muted-foreground">
+    We've sent a 6-digit verification code to your phone
+  </p>
 
-              <Form {...otpForm}>
-                <form onSubmit={otpForm.handleSubmit(handleVerifyOTP)} className="space-y-4">
-                  <FormField
-                    control={otpForm.control}
-                    name="otp"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col items-center space-y-3">
-                        <FormControl>
-                          <InputOTP maxLength={6} {...field}>
-                            <InputOTPGroup>
-                              <InputOTPSlot index={0} />
-                              <InputOTPSlot index={1} />
-                              <InputOTPSlot index={2} />
-                              <InputOTPSlot index={3} />
-                              <InputOTPSlot index={4} />
-                              <InputOTPSlot index={5} />
-                            </InputOTPGroup>
-                          </InputOTP>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+  <Form {...otpForm}>
+    <form onSubmit={otpForm.handleSubmit(handleVerifyOTP)} className="space-y-4">
+      <FormField
+        control={otpForm.control}
+        name="otp"
+        render={({ field }) => (
+          <FormItem className="flex flex-col items-center space-y-3">
+            <FormControl>
+              <InputOTP maxLength={6} {...field}>
+                <InputOTPGroup>
+                  {[...Array(6)].map((_, i) => (
+                    <InputOTPSlot key={i} index={i} />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setShowOtpVerification(false)}
-                    >
-                      Back
-                    </Button>
-                    <Button type="submit" className="w-full">
-                      Verify & Register
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={() => {
+            setShowOtpVerification(false);
+            otpForm.reset(); // Reset OTP field when backing out
+          }}
+        >
+          Back
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full"
+          onClick={() => otpForm.reset()} // Clear OTP
+        >
+          Clear
+        </Button>
+        <Button type="submit" className="w-full">
+          Verify & Register
+        </Button>
+      </div>
+    </form>
+  </Form>
+</div>
+
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
