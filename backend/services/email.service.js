@@ -20,13 +20,12 @@ class EmailService {
     }
 
     async sendOtp(email, otp) {
-        console.log(process.env.EMAIL_PASS);
         this.mailOption.to = email;
         this.mailOption.html = `
             <h1>your otp is  <span style="color:red;">${otp}</span>  </h1>
             `;
         await this.transport.sendMail(this.mailOption);
-        console.log("otp sent to"+email);
+        console.log("otp sent to "+email);
     }
 
     async sendPasswordResetToken(email, token) {

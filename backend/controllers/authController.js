@@ -10,7 +10,6 @@ exports.register = async (req, res) => {
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ message: 'Email already in use' });
 
-    console.log("user registration initiated");
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({ name: fullName, email, password: hashed,phone });
     console.log("completed registering");
@@ -42,7 +41,6 @@ exports.login = async (req, res) => {
 // for existing mails in case of password reset or others
 exports.requestOtp = async function (req, res) {
     try {
-        console.log("opt start");
         const payload = req.body;
         const { status } = await User.findOne({email :payload.email});
         if (!status) throw new Error('email not exists');
@@ -65,9 +63,7 @@ exports.requestOtp = async function (req, res) {
 
 exports.requestVerifyOtp = async function (req, res) {
     try {
-        console.log("otp start");
         const payload = req.body;
-        console.log(payload);
         const { otp, _id } = await otpService.genOtp(payload.email);
         await emailService.sendOtp(payload.email, otp);
         res.status(200).json({
